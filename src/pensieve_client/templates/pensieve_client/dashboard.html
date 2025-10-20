@@ -1,0 +1,17 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <!-- <h2>Performance Dashboard</h2> -->
+  <p>Showing insights for your project.</p>
+
+  <h2>Latest Errors</h2>
+  {% if error_data %}
+    <ul>
+    {% for error in error_data %}
+      <li><strong>{{ error.error_type }}</strong> (seen {{ error.count }} times, last seen {{ error.last_seen }})</li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    <p>No errors recorded!</p>
+  {% endif %}
+{% endblock %}

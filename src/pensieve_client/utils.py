@@ -2,7 +2,7 @@ import requests
 from django.conf import settings
 
 
-def fetch_dashboard_data_from_pensieve_api(resource):
+def fetch_dashboard_data_from_pensieve_api(resource, filters={}):
     """
     Fetches real data from the main Pensieve server API.
     """
@@ -14,10 +14,10 @@ def fetch_dashboard_data_from_pensieve_api(resource):
         return []
 
     headers = {"X-API-KEY": api_key}
-    api_url = f"{base_url}/{resource}/" # e.g., http://.../api/errors/
+    api_url = f"{base_url}/pensieve/{resource}/" # e.g., http://.../api/errors/
 
     try:
-        response = requests.get(api_url, headers=headers, timeout=3.0)
+        response = requests.get(api_url, headers=headers, params=filters, timeout=3.0)
         response.raise_for_status()  # Raises an exception for 4xx/5xx errors
         return response.json()
     except requests.RequestException:

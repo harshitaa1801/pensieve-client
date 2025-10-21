@@ -14,4 +14,82 @@
   {% else %}
     <p>No errors recorded!</p>
   {% endif %}
+
+  
+<h2>Performance Metrics</h2>
+  
+  <div style="margin-bottom: 10px;">
+    <label for="url_filter_input">Filter by URL:</label>
+    <input type="text" id="url_filter_input" value="{{ current_url_filter|default:'' }}">
+    
+    <button type="button" id="url_filter_button">Filter</button>
+    
+    {% if current_url_filter %}
+      <a href="?">Clear</a>
+    {% endif %}
+  </div>
+  <script>
+    // This waits for the page to be fully loaded before running any code
+    document.addEventListener('DOMContentLoaded', function() {
+      
+      // Define the function inside the loaded event
+      function applyFilter() {
+        const currentUrl = new URL(window.location.href);
+        
+        // This line was failing. It's now safe inside this block.
+        const filterInput = document.getElementById('url_filter_input');
+        
+        if (filterInput && filterInput.value) {
+          currentUrl.searchParams.set('url_filter', filterInput.value);
+        } else {
+          currentUrl.searchParams.delete('url_filter');
+        }
+        window.location.href = currentUrl.href;
+      }
+
+      // Attach the click event to the button
+      const filterButton = document.getElementById('url_filter_button');
+      if (filterButton) {
+        filterButton.onclick = applyFilter;
+      }
+      
+      // Attach the 'Enter' key press event to the input
+      const filterInput = document.getElementById('url_filter_input');
+      if (filterInput) {
+        filterInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            applyFilter();
+          }
+        });
+      }
+    });
+  </script>
+  
+  {% if metric_data %}
+    <table>
+      <thead>
+        <tr>
+          <th>URL</th>
+          <th>Time Window</th>
+          <th>Count</th>
+          <th>Avg. Duration</th>
+          <th>p95 Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for metric in metric_data %}
+        <tr>
+          <td>{{ metric.url }}</td>
+          <td>{{ metric.timestamp }}</td>
+          <td>{{ metric.request_count }}</td>
+          <td>{{ metric.avg_duration_ms }} ms</td>
+          <td>{{ metric.p95_duration_ms }} ms</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No performance data aggregated yet.</p>
+  {% endif %}
+  
 {% endblock %}

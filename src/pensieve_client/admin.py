@@ -20,19 +20,24 @@ class MonitoredProjectAdmin(admin.ModelAdmin):
         # 1. Get the URL filter from the request's GET parameters
         url_filter = request.GET.get('url_filter', '')
         
-        # 2. Prepare the filter dictionary for the API call
-        metric_filters = {}
-        if url_filter:
-            metric_filters['url'] = url_filter
-        
         error_data = fetch_dashboard_data_from_pensieve_api("errors")
-        metric_data = fetch_dashboard_data_from_pensieve_api("metrics", metric_filters)
+
+        metric_data = []
+        top_slow_endpoints = []
+
+        # 2. Prepare the filter dictionary for the API call
+        if url_filter:
+            metric_filters = {'url': url_filter}
+            metric_data = fetch_dashboard_data_from_pensieve_api("metrics", metric_filters)
+        else:
+            top_slow_endpoints = fetch_dashboard_data_from_pensieve_api("metrics/top-endpoints")
 
         context = {
             **self.get_model_perms(request),
             'title': 'Pensieve Dashboard',
             'error_data': error_data,
             'metric_data': metric_data,
+            'top_slow_endpoints': top_slow_endpoints,
             'current_url_filter': url_filter,
             'has_view_permission': self.has_view_permission(request)
         }

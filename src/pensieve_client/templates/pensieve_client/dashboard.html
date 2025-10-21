@@ -1,42 +1,136 @@
 {% extends "admin/base_site.html" %}
 
+{% block extrahead %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
 {% block content %}
-  <!-- <h2>Performance Dashboard</h2> -->
-  <p>Showing insights for your project.</p>
+  <h1>Performance Dashboard</h1>
 
   <h2>Latest Errors</h2>
   {% if error_data %}
-    <ul>
-    {% for error in error_data %}
-      <li><strong>{{ error.error_type }}</strong> (seen {{ error.count }} times, last seen {{ error.last_seen }})</li>
-    {% endfor %}
-    </ul>
+    <table>
+      <thead>
+        <tr>
+          <th>Error Type</th>
+          <th>Count</th>
+          <th>Last Seen</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for error in error_data %}
+        <tr>
+          <td><strong>{{ error.error_type }}</strong></td>
+          <td>{{ error.count }}</td>
+          <td>{{ error.last_seen }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
   {% else %}
     <p>No errors recorded!</p>
   {% endif %}
 
-  
-<h2>Performance Metrics</h2>
+  <br>
+
+  <h2>Performance Metrics</h2>
   
   <div style="margin-bottom: 10px;">
     <label for="url_filter_input">Filter by URL:</label>
     <input type="text" id="url_filter_input" value="{{ current_url_filter|default:'' }}">
-    
     <button type="button" id="url_filter_button">Filter</button>
-    
     {% if current_url_filter %}
       <a href="?">Clear</a>
     {% endif %}
   </div>
+
+  {% if current_url_filter %}
+    <h3>Performance History for {{ current_url_filter }}</h3>
+    <div style="width: 80%; margin-top: 20px;">
+      <canvas id="performanceChart"></canvas>
+    </div>
+    
+    {% if not metric_data %}
+      <p>No performance data found for URL: <strong>{{ current_url_filter }}</strong></p>
+    {% endif %}
+    
+    {{ metric_data|json_script:"metric-data" }}
+
+  {% else %}
+    <h3>Top 5 Slowest Endpoints (by p95 Latency)</h3>
+    {% if top_slow_endpoints %}
+      <table>
+        <thead>
+          <tr>
+            <th>URL</th>
+            <th>Highest Recorded p95 Latency</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for endpoint in top_slow_endpoints %}
+          <tr>
+            <td><a href="?url_filter={{ endpoint.url|urlencode }}">{{ endpoint.url }}</a></td>
+            <td>{{ endpoint.max_p95 }} ms</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No performance data aggregated yet.</p>
+    {% endif %}
+  {% endif %}
   <script>
-    // This waits for the page to be fully loaded before running any code
     document.addEventListener('DOMContentLoaded', function() {
       
-      // Define the function inside the loaded event
+      // --- Chart.js Logic ---
+      // This code now only runs IF the chart canvas exists on the page
+      const chartCanvas = document.getElementById('performanceChart');
+      if (chartCanvas) {
+        const data = JSON.parse(document.getElementById('metric-data').textContent);
+        
+        if (data && data.length > 0) {
+          data.reverse(); 
+
+          const labels = data.map(d => new Date(d.timestamp).toLocaleString());
+          const p95Data = data.map(d => d.p95_duration_ms);
+          const avgData = data.map(d => d.avg_duration_ms);
+
+          new Chart(chartCanvas, {
+            type: 'line',
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: 'p95 Latency (ms)',
+                  data: p95Data,
+                  borderColor: 'rgb(255, 99, 132)',
+                  tension: 0.1
+                },
+                {
+                  label: 'Average Latency (ms)',
+                  data: avgData,
+                  borderColor: 'rgb(54, 162, 235)',
+                  tension: 0.1
+                }
+              ]
+            },
+            options: {
+              scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Duration (ms)' } },
+                x: { title: { display: true, text: 'Time' } }
+              }
+            }
+          });
+        } else {
+          // If there's no data for the chart, hide the canvas
+          chartCanvas.style.display = 'none';
+        }
+      }
+
+      // --- Filter Button Logic (no changes from before) ---
       function applyFilter() {
         const currentUrl = new URL(window.location.href);
-        
-        // This line was failing. It's now safe inside this block.
         const filterInput = document.getElementById('url_filter_input');
         
         if (filterInput && filterInput.value) {
@@ -47,13 +141,11 @@
         window.location.href = currentUrl.href;
       }
 
-      // Attach the click event to the button
       const filterButton = document.getElementById('url_filter_button');
       if (filterButton) {
         filterButton.onclick = applyFilter;
       }
       
-      // Attach the 'Enter' key press event to the input
       const filterInput = document.getElementById('url_filter_input');
       if (filterInput) {
         filterInput.addEventListener('keypress', function(e) {
@@ -64,32 +156,4 @@
       }
     });
   </script>
-  
-  {% if metric_data %}
-    <table>
-      <thead>
-        <tr>
-          <th>URL</th>
-          <th>Time Window</th>
-          <th>Count</th>
-          <th>Avg. Duration</th>
-          <th>p95 Duration</th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for metric in metric_data %}
-        <tr>
-          <td>{{ metric.url }}</td>
-          <td>{{ metric.timestamp }}</td>
-          <td>{{ metric.request_count }}</td>
-          <td>{{ metric.avg_duration_ms }} ms</td>
-          <td>{{ metric.p95_duration_ms }} ms</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p>No performance data aggregated yet.</p>
-  {% endif %}
-  
 {% endblock %}

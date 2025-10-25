@@ -12,6 +12,7 @@ authors = [
 ]
 description = "The official client library for the Pensieve APM."
 readme = "README.md"
+license = { file="LICENSE" }
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",

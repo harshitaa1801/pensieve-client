@@ -7,7 +7,7 @@ def fetch_dashboard_data_from_pensieve_api(resource, filters={}):
     Fetches real data from the main Pensieve server API.
     """
     # Get the base URL from the user's settings.py
-    base_url = getattr(settings, "PENSIEVE_URL", "").replace('/ingest/', '')
+    base_url = getattr(settings, "PENSIEVE_URL", "")
     api_key = getattr(settings, "PENSIEVE_API_KEY", None)
 
     if not api_key or not base_url:

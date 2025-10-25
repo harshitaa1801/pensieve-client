@@ -10,7 +10,7 @@ class PensieveMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
         self.api_key = getattr(settings, "PENSIEVE_API_KEY", None)
-        self.ingest_url = getattr(settings, "PENSIEVE_URL", None)
+        self.ingest_url = getattr(settings, "PENSIEVE_URL", None) + "/pensieve/ingest/"
         
         # 1. Get the list of URLs the user manually excluded
         user_excluded_urls = getattr(settings, "PENSIEVE_EXCLUDE_URLS", [])

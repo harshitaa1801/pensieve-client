@@ -181,6 +181,12 @@
 
       <div class="error-section">
         <h2>Last Recorded Error</h2>
+        
+        <h3>URL</h3>
+        <div style="background-color: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 20px;">
+          <code style="font-size: 14px; color: #667eea; word-wrap: break-word;">{{ error_data.url }}</code>
+        </div>
+        
         <h3>Error Message</h3>
         <div class="error-message">
           {{ error_data.latest_instance.error_message }}

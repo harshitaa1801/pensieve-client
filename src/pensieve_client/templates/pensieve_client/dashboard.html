@@ -21,7 +21,13 @@
       <tbody>
       {% for error in error_data %}
         <tr>
-          <td><strong>{{ error.error_type }}</strong></td>
+          <td>
+            <strong>
+              <a href="{% url 'admin:pensieve-error-detail' error.group_hash %}">
+                {{ error.error_type }}
+              </a>
+            </strong>
+          </td>
           <td>{{ error.count }}</td>
           <td>{{ error.last_seen }}</td>
         </tr>

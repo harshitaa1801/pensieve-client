@@ -360,35 +360,200 @@
           const labels = data.map(d => formatDateTime(d.timestamp));
           const p95Data = data.map(d => d.p95_duration_ms);
           const avgData = data.map(d => d.avg_duration_ms);
+          const requestCountData = data.map(d => d.request_count || 0);
 
           new Chart(chartCanvas, {
-            type: 'line',
+            type: 'bar',
             data: {
               labels: labels,
               datasets: [
                 {
+                  label: 'Request Count',
+                  data: requestCountData,
+                  type: 'bar',
+                  backgroundColor: 'rgba(40, 167, 69, 0.3)',
+                  borderColor: '#28a745',
+                  borderWidth: 1,
+                  borderRadius: 4,
+                  yAxisID: 'y-requests',
+                  order: 3
+                },
+                {
                   label: 'p95 Latency (ms)',
                   data: p95Data,
+                  type: 'line',
                   borderColor: '#dc3545',
                   backgroundColor: 'rgba(220, 53, 69, 0.1)',
                   borderWidth: 3,
                   tension: 0.4,
-                  fill: true,
+                  fill: false,
                   pointRadius: 5,
                   pointHoverRadius: 7,
-                  pointBackgroundColor: '#dc3545'
+                  pointBackgroundColor: '#dc3545',
+                  yAxisID: 'y-latency',
+                  order: 1
                 },
                 {
                   label: 'Average Latency (ms)',
                   data: avgData,
+                  type: 'line',
                   borderColor: '#667eea',
                   backgroundColor: 'rgba(102, 126, 234, 0.1)',
                   borderWidth: 3,
                   tension: 0.4,
-                  fill: true,
+                  fill: false,
                   pointRadius: 5,
                   pointHoverRadius: 7,
-                  pointBackgroundColor: '#667eea'
+                  pointBackgroundColor: '#667eea',
+                  yAxisID: 'y-latency',
+                  order: 2
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              interaction: {
+                mode: 'index',
+                intersect: false
+              },
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'top',
+                  labels: {
+                    usePointStyle: true,
+                    padding: 15,
+                    font: {
+                      size: 13,
+                      weight: '500'
+                    }
+                  }
+                },
+                tooltip: {
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  padding: 12,
+                  titleFont: {
+                    size: 14,
+                    weight: '600'
+                  },
+                  bodyFont: {
+                    size: 13
+                  },
+                  displayColors: true,
+                  callbacks: {
+                    label: function(context) {
+                      const label = context.dataset.label;
+                      const value = context.parsed.y;
+                      if (label === 'Request Count') {
+                        return label + ': ' + value + ' requests';
+                      } else {
+                        return label + ': ' + value.toFixed(2) + ' ms';
+                      }
+                    }
+                  }
+                }
+              },
+              scales: {
+                'y-latency': { 
+                  type: 'linear',
+                  position: 'left',
+                  beginAtZero: true, 
+                  title: { 
+                    display: true, 
+                    text: 'Latency (ms)',
+                    font: {
+                      size: 14,
+                      weight: '600'
+                    },
+                    color: '#4a5fc1'
+                  },
+                  grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                  },
+                  ticks: {
+                    font: {
+                      size: 12
+                    },
+                    color: '#4a5fc1'
+                  }
+                },
+                'y-requests': { 
+                  type: 'linear',
+                  position: 'right',
+                  beginAtZero: true, 
+                  title: { 
+                    display: true, 
+                    text: 'Request Count',
+                    font: {
+                      size: 14,
+                      weight: '600'
+                    },
+                    color: '#1e7e34'
+                  },
+                  grid: {
+                    drawOnChartArea: false
+                  },
+                  ticks: {
+                    font: {
+                      size: 12
+                    },
+                    color: '#1e7e34',
+                    precision: 0
+                  }
+                },
+                x: { 
+                  title: { 
+                    display: true, 
+                    text: 'Time',
+                    font: {
+                      size: 14,
+                      weight: '600'
+                    }
+                  },
+                  grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                  },
+                  ticks: {
+                    font: {
+                      size: 11
+                    },
+                    maxRotation: 45,
+                    minRotation: 45
+                  }
+                }
+              }
+            }
+          });
+        } else {
+          chartCanvas.style.display = 'none';
+        }
+      }
+
+      // --- Request Count Bar Chart ---
+      const requestCountCanvas = document.getElementById('requestCountChart');
+      if (requestCountCanvas) {
+        const data = JSON.parse(document.getElementById('metric-data').textContent);
+        
+        if (data && data.length > 0) {
+          data.reverse(); 
+
+          const labels = data.map(d => formatDateTime(d.timestamp));
+          const requestCountData = data.map(d => d.request_count || 0);
+
+          new Chart(requestCountCanvas, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: 'Request Count',
+                  data: requestCountData,
+                  backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                  borderColor: '#28a745',
+                  borderWidth: 2,
+                  borderRadius: 6,
+                  hoverBackgroundColor: 'rgba(40, 167, 69, 0.9)'
                 }
               ]
             },
@@ -421,7 +586,7 @@
                   displayColors: true,
                   callbacks: {
                     label: function(context) {
-                      return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' ms';
+                      return context.dataset.label + ': ' + context.parsed.y + ' requests';
                     }
                   }
                 }
@@ -431,7 +596,7 @@
                   beginAtZero: true, 
                   title: { 
                     display: true, 
-                    text: 'Duration (ms)',
+                    text: 'Number of Requests',
                     font: {
                       size: 14,
                       weight: '600'
@@ -443,7 +608,8 @@
                   ticks: {
                     font: {
                       size: 12
-                    }
+                    },
+                    precision: 0
                   }
                 },
                 x: { 
@@ -470,7 +636,7 @@
             }
           });
         } else {
-          chartCanvas.style.display = 'none';
+          requestCountCanvas.style.display = 'none';
         }
       }
 

@@ -3,94 +3,343 @@
 {% block extrahead %}
   {{ block.super }}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .dashboard-container {
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+
+    .dashboard-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-header h1 {
+      margin: 0;
+      font-size: 32px;
+      font-weight: 600;
+    }
+
+    .section-card {
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .section-title {
+      font-size: 24px;
+      color: #333;
+      margin: 0 0 20px 0;
+      padding-bottom: 12px;
+      border-bottom: 3px solid #667eea;
+      font-weight: 600;
+    }
+
+    .styled-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    .styled-table thead tr {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: left;
+    }
+
+    .styled-table th,
+    .styled-table td {
+      padding: 14px 18px;
+    }
+
+    .styled-table th {
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .styled-table tbody tr {
+      border-bottom: 1px solid #e0e0e0;
+      transition: background-color 0.2s ease;
+    }
+
+    .styled-table tbody tr:hover {
+      background-color: #f8f9ff;
+    }
+
+    .styled-table tbody tr:last-of-type {
+      border-bottom: 2px solid #667eea;
+    }
+
+    .styled-table a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    .styled-table a:hover {
+      color: #5568d3;
+      text-decoration: underline;
+    }
+
+    .error-count-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background-color: #dc3545;
+      color: white;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .latency-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background-color: #ffc107;
+      color: #333;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-size: 16px;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+
+    .filter-container {
+      background-color: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-label {
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .filter-input {
+      flex: 1;
+      min-width: 250px;
+      padding: 10px 15px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.2s ease;
+    }
+
+    .filter-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .filter-button {
+      padding: 10px 24px;
+      background-color: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      font-size: 14px;
+    }
+
+    .filter-button:hover {
+      background-color: #5568d3;
+    }
+
+    .clear-filter {
+      padding: 10px 20px;
+      background-color: #99a5b1;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: background-color 0.2s ease;
+      font-size: 14px;
+    }
+
+    .clear-filter:hover {
+      background-color: #5a6268;
+      text-decoration: none;
+    }
+
+    .chart-container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 25px;
+      margin-top: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .chart-title {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .no-data-message {
+      background-color: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      padding: 20px;
+      color: #856404;
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
-  <h1>Performance Dashboard</h1>
+  <div class="dashboard-container">
+    <div class="dashboard-header">
+      <h1>📊 Performance Dashboard</h1>
+    </div>
 
-  <h2>Latest Errors</h2>
-  {% if error_data %}
-    <table>
-      <thead>
-        <tr>
-          <th>Error Type</th>
-          <th>Count</th>
-          <th>Last Seen</th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for error in error_data %}
-        <tr>
-          <td>
-            <strong>
-              <a href="{% url 'admin:pensieve-error-detail' error.group_hash %}">
-                {{ error.error_type }}
-              </a>
-            </strong>
-          </td>
-          <td>{{ error.count }}</td>
-          <td>{{ error.last_seen }}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p>No errors recorded!</p>
-  {% endif %}
+    <!-- Latest Errors Section -->
+    <div class="section-card">
+      <h2 class="section-title">🔴 Latest Errors</h2>
+      {% if error_data %}
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Error Type</th>
+              <th>Occurrences</th>
+              <th>Last Seen</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for error in error_data %}
+            <tr>
+              <td>
+                <a href="{% url 'admin:pensieve-error-detail' error.group_hash %}">
+                  {{ error.error_type }}
+                </a>
+              </td>
+              <td><span class="error-count-badge">{{ error.count }}</span></td>
+              <td>{{ error.last_seen }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">✓</div>
+          <p>No errors recorded! Your application is running smoothly.</p>
+        </div>
+      {% endif %}
+    </div>
 
-  <br>
+    <!-- Performance Metrics Section -->
+    <div class="section-card">
+      <h2 class="section-title">⚡ Performance Metrics</h2>
+      
+      <div class="filter-container">
+        <label for="url_filter_input" class="filter-label">Filter by URL:</label>
+        <input 
+          type="text" 
+          id="url_filter_input" 
+          class="filter-input"
+          placeholder="Enter endpoint URL..."
+          value="{{ current_url_filter|default:'' }}"
+        >
+        <button type="button" id="url_filter_button" class="filter-button">Apply Filter</button>
+        {% if current_url_filter %}
+          <a href="?" class="clear-filter">Clear Filter</a>
+        {% endif %}
+      </div>
 
-  <h2>Performance Metrics</h2>
-  
-  <div style="margin-bottom: 10px;">
-    <label for="url_filter_input">Filter by URL:</label>
-    <input type="text" id="url_filter_input" value="{{ current_url_filter|default:'' }}">
-    <button type="button" id="url_filter_button">Filter</button>
-    {% if current_url_filter %}
-      <a href="?">Clear</a>
-    {% endif %}
+      {% if current_url_filter %}
+        <div class="chart-container">
+          <div class="chart-title">Performance History for: <code>{{ current_url_filter }}</code></div>
+          <canvas id="performanceChart"></canvas>
+        </div>
+        
+        {% if not metric_data %}
+          <div class="no-data-message">
+            <strong>No performance data found for URL:</strong> {{ current_url_filter }}
+          </div>
+        {% endif %}
+        
+        {{ metric_data|json_script:"metric-data" }}
+
+      {% else %}
+        <h3 style="margin: 25px 0 15px 0; font-size: 18px; color: #555;">Top 5 Slowest Endpoints (by p95 Latency)</h3>
+        {% if top_slow_endpoints %}
+          <table class="styled-table">
+            <thead>
+              <tr>
+                <th>Endpoint URL</th>
+                <th>Highest p95 Latency</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for endpoint in top_slow_endpoints %}
+              <tr>
+                <td>
+                  <a href="?url_filter={{ endpoint.url|urlencode }}">{{ endpoint.url }}</a>
+                </td>
+                <td><span class="latency-badge">{{ endpoint.max_p95 }} ms</span></td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-state-icon">📈</div>
+            <p>No performance data aggregated yet. Start monitoring your endpoints!</p>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
   </div>
 
-  {% if current_url_filter %}
-    <h3>Performance History for {{ current_url_filter }}</h3>
-    <div style="width: 80%; margin-top: 20px;">
-      <canvas id="performanceChart"></canvas>
-    </div>
-    
-    {% if not metric_data %}
-      <p>No performance data found for URL: <strong>{{ current_url_filter }}</strong></p>
-    {% endif %}
-    
-    {{ metric_data|json_script:"metric-data" }}
-
-  {% else %}
-    <h3>Top 5 Slowest Endpoints (by p95 Latency)</h3>
-    {% if top_slow_endpoints %}
-      <table>
-        <thead>
-          <tr>
-            <th>URL</th>
-            <th>Highest Recorded p95 Latency</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for endpoint in top_slow_endpoints %}
-          <tr>
-            <td><a href="?url_filter={{ endpoint.url|urlencode }}">{{ endpoint.url }}</a></td>
-            <td>{{ endpoint.max_p95 }} ms</td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    {% else %}
-      <p>No performance data aggregated yet.</p>
-    {% endif %}
-  {% endif %}
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       
+      // Function to format date in the same way as backend
+      function formatDateTime(dateString) {
+        const date = new Date(dateString);
+        const options = {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        };
+        return date.toLocaleString('en-US', options);
+      }
+      
       // --- Chart.js Logic ---
-      // This code now only runs IF the chart canvas exists on the page
       const chartCanvas = document.getElementById('performanceChart');
       if (chartCanvas) {
         const data = JSON.parse(document.getElementById('metric-data').textContent);
@@ -98,7 +347,7 @@
         if (data && data.length > 0) {
           data.reverse(); 
 
-          const labels = data.map(d => new Date(d.timestamp).toLocaleString());
+          const labels = data.map(d => formatDateTime(d.timestamp));
           const p95Data = data.map(d => d.p95_duration_ms);
           const avgData = data.map(d => d.avg_duration_ms);
 
@@ -110,31 +359,112 @@
                 {
                   label: 'p95 Latency (ms)',
                   data: p95Data,
-                  borderColor: 'rgb(255, 99, 132)',
-                  tension: 0.1
+                  borderColor: '#dc3545',
+                  backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                  borderWidth: 3,
+                  tension: 0.4,
+                  fill: true,
+                  pointRadius: 5,
+                  pointHoverRadius: 7,
+                  pointBackgroundColor: '#dc3545'
                 },
                 {
                   label: 'Average Latency (ms)',
                   data: avgData,
-                  borderColor: 'rgb(54, 162, 235)',
-                  tension: 0.1
+                  borderColor: '#667eea',
+                  backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                  borderWidth: 3,
+                  tension: 0.4,
+                  fill: true,
+                  pointRadius: 5,
+                  pointHoverRadius: 7,
+                  pointBackgroundColor: '#667eea'
                 }
               ]
             },
             options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'top',
+                  labels: {
+                    usePointStyle: true,
+                    padding: 15,
+                    font: {
+                      size: 13,
+                      weight: '500'
+                    }
+                  }
+                },
+                tooltip: {
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  padding: 12,
+                  titleFont: {
+                    size: 14,
+                    weight: '600'
+                  },
+                  bodyFont: {
+                    size: 13
+                  },
+                  displayColors: true,
+                  callbacks: {
+                    label: function(context) {
+                      return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' ms';
+                    }
+                  }
+                }
+              },
               scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Duration (ms)' } },
-                x: { title: { display: true, text: 'Time' } }
+                y: { 
+                  beginAtZero: true, 
+                  title: { 
+                    display: true, 
+                    text: 'Duration (ms)',
+                    font: {
+                      size: 14,
+                      weight: '600'
+                    }
+                  },
+                  grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                  },
+                  ticks: {
+                    font: {
+                      size: 12
+                    }
+                  }
+                },
+                x: { 
+                  title: { 
+                    display: true, 
+                    text: 'Time',
+                    font: {
+                      size: 14,
+                      weight: '600'
+                    }
+                  },
+                  grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                  },
+                  ticks: {
+                    font: {
+                      size: 11
+                    },
+                    maxRotation: 45,
+                    minRotation: 45
+                  }
+                }
               }
             }
           });
         } else {
-          // If there's no data for the chart, hide the canvas
           chartCanvas.style.display = 'none';
         }
       }
 
-      // --- Filter Button Logic (no changes from before) ---
+      // --- Filter Button Logic ---
       function applyFilter() {
         const currentUrl = new URL(window.location.href);
         const filterInput = document.getElementById('url_filter_input');

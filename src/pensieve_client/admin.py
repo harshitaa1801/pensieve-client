@@ -60,11 +60,25 @@ class MonitoredProjectAdmin(admin.ModelAdmin):
     
     def changelist_view(self, request, extra_context=None):
         """This is the main dashboard view for the client."""
+        from datetime import datetime
 
         # 1. Get the URL filter from the request's GET parameters
         url_filter = request.GET.get('url_filter', '')
         
         error_data = fetch_dashboard_data_from_pensieve_api("errors")
+        
+        # Format dates in error_data
+        if error_data and isinstance(error_data, list):
+            for error in error_data:
+                for date_field in ['first_seen', 'last_seen']:
+                    if date_field in error and error[date_field]:
+                        try:
+                            # Try parsing ISO format datetime string
+                            dt = datetime.fromisoformat(error[date_field].replace('Z', '+00:00'))
+                            error[date_field] = dt.strftime('%B %d, %Y, %I:%M %p')
+                        except (ValueError, AttributeError):
+                            # If parsing fails, keep the original value
+                            pass
 
         metric_data = []
         top_slow_endpoints = []

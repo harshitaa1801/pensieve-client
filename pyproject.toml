@@ -24,3 +24,13 @@ dependencies = [
     "Django>=3.2",
     "requests",
 ]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+# Include any files under the package (useful fallback for non-sdist builders)
+"pensieve_client" = ["templates/*", "templates/pensieve_client/*"]

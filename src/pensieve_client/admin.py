@@ -82,6 +82,7 @@ class MonitoredProjectAdmin(admin.ModelAdmin):
 
         metric_data = []
         top_slow_endpoints = []
+        project_summary_data = []
 
         # 2. Prepare the filter dictionary for the API call
         if url_filter:
@@ -89,6 +90,7 @@ class MonitoredProjectAdmin(admin.ModelAdmin):
             metric_data = fetch_dashboard_data_from_pensieve_api("metrics", metric_filters)
         else:
             top_slow_endpoints = fetch_dashboard_data_from_pensieve_api("metrics/top-endpoints")
+            project_summary_data = fetch_dashboard_data_from_pensieve_api("metrics", filters={'url': '__overall__'})
 
         context = {
             **self.get_model_perms(request),
@@ -96,6 +98,7 @@ class MonitoredProjectAdmin(admin.ModelAdmin):
             'error_data': error_data,
             'metric_data': metric_data,
             'top_slow_endpoints': top_slow_endpoints,
+            'project_summary_data': project_summary_data,
             'current_url_filter': url_filter,
             'has_view_permission': self.has_view_permission(request)
         }

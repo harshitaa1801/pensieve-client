@@ -68,6 +68,8 @@ class MonitoredProjectAdmin(admin.ModelAdmin):
     def endpoint_detail_view(self, request, url_b64):
         """The view for a single endpoint's performance details."""
         from django.conf import settings
+        from datetime import datetime
+        
         api_key = getattr(settings, "PENSIEVE_API_KEY", None)
         
         # Decode the URL from base64
@@ -82,6 +84,18 @@ class MonitoredProjectAdmin(admin.ModelAdmin):
         log_data = fetch_dashboard_data_from_pensieve_api(
             "performance-logs", filters={'url': url}
         )
+        
+        # Format timestamps in log_data
+        if log_data and isinstance(log_data, list):
+            for log in log_data:
+                if 'timestamp' in log and log['timestamp']:
+                    try:
+                        # Try parsing ISO format datetime string
+                        dt = datetime.fromisoformat(log['timestamp'].replace('Z', '+00:00'))
+                        log['timestamp'] = dt.strftime('%B %d, %Y, %I:%M:%S %p')
+                    except (ValueError, AttributeError):
+                        # If parsing fails, keep the original value
+                        pass
         
         context = {
             **self.get_model_perms(request),

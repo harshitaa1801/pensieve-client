@@ -107,6 +107,14 @@
       font-weight: 600;
     }
 
+    .status-error {
+      color: #dc3545;
+      font-weight: 600;
+      background-color: #f8d7da;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
     .back-button {
       display: inline-block;
       padding: 12px 24px;
@@ -187,7 +195,13 @@
             <tr>
               <td>{{ log.timestamp }}</td>
               <td>{{ log.duration_ms }}</td>
-              <td>{{ log.status_code }}</td>
+              <td>
+                {% if log.status_code == 500 %}
+                  <span class="status-error">{{ log.status_code }}</span>
+                {% else %}
+                  {{ log.status_code }}
+                {% endif %}
+              </td>
             </tr>
           {% endfor %}
           </tbody>

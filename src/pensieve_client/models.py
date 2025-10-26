@@ -9,3 +9,4 @@ class MonitoredProject(Group):
         proxy = True
         verbose_name = 'Pensieve Dashboard'
         verbose_name_plural = 'Pensieve Dashboards'
+        managed = False

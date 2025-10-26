@@ -4,6 +4,8 @@ from django.contrib import admin
 from django.urls import path, reverse
 from django.shortcuts import render
 from django.utils.html import format_html
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 
 from pensieve_client.utils import fetch_dashboard_data_from_pensieve_api
 from .models import MonitoredProject
@@ -21,6 +23,11 @@ class MonitoredProjectAdmin(admin.ModelAdmin):
                 'errors/<str:group_hash>/',
                 self.admin_site.admin_view(self.error_detail_view),
                 name='pensieve-error-detail',
+            ),
+            path(
+                'endpoints/<str:url_b64>/',
+                self.admin_site.admin_view(self.endpoint_detail_view),
+                name='pensieve-endpoint-detail',
             ),
         ]
         return custom_urls + urls
@@ -57,6 +64,34 @@ class MonitoredProjectAdmin(admin.ModelAdmin):
             'has_view_permission': self.has_view_permission(request)
         }
         return render(request, 'pensieve_client/error_detail.html', context)
+    
+    def endpoint_detail_view(self, request, url_b64):
+        """The view for a single endpoint's performance details."""
+        from django.conf import settings
+        api_key = getattr(settings, "PENSIEVE_API_KEY", None)
+        
+        # Decode the URL from base64
+        url = force_str(urlsafe_base64_decode(url_b64))
+        
+        # 1. Fetch aggregated data for the charts
+        metric_data = fetch_dashboard_data_from_pensieve_api(
+            "metrics", filters={'url': url}
+        )
+        
+        # 2. Fetch raw log data for the table
+        log_data = fetch_dashboard_data_from_pensieve_api(
+            "performance-logs", filters={'url': url}
+        )
+        
+        context = {
+            **self.get_model_perms(request),
+            'title': f"Performance: {url}",
+            'endpoint_url': url,
+            'metric_data': metric_data,
+            'log_data': log_data,
+            'has_view_permission': self.has_view_permission(request)
+        }
+        return render(request, 'pensieve_client/endpoint_detail.html', context)    
     
     def changelist_view(self, request, extra_context=None):
         """This is the main dashboard view for the client."""

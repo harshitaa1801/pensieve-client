@@ -1,0 +1,407 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .endpoint-detail-container {
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+
+    .endpoint-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .endpoint-header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+      word-wrap: break-word;
+    }
+
+    .section-card {
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .section-title {
+      font-size: 24px;
+      color: #333;
+      margin: 0 0 20px 0;
+      padding-bottom: 12px;
+      border-bottom: 3px solid #667eea;
+      font-weight: 600;
+    }
+
+    .chart-container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 25px;
+      margin-top: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .chart-title {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .styled-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    .styled-table thead tr {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: left;
+    }
+
+    .styled-table th,
+    .styled-table td {
+      padding: 14px 18px;
+    }
+
+    .styled-table th {
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .styled-table tbody tr {
+      border-bottom: 1px solid #e0e0e0;
+      transition: background-color 0.2s ease;
+    }
+
+    .styled-table tbody tr:hover {
+      background-color: #f8f9ff;
+    }
+
+    .styled-table tbody tr:last-of-type {
+      border-bottom: 2px solid #667eea;
+    }
+
+    .n-plus-one-yes {
+      color: #dc3545;
+      font-weight: 600;
+    }
+
+    .n-plus-one-no {
+      color: #28a745;
+      font-weight: 600;
+    }
+
+    .back-button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: background-color 0.3s ease;
+      margin-top: 20px;
+    }
+
+    .back-button:hover {
+      background-color: #5568d3;
+      color: white;
+      text-decoration: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-size: 16px;
+    }
+
+    .no-data-message {
+      background-color: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      padding: 20px;
+      color: #856404;
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="endpoint-detail-container">
+    <div class="endpoint-header">
+      <h1>📊 Performance Details</h1>
+      <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">
+        <code style="background: rgba(255, 255, 255, 0.87); padding: 4px 8px; border-radius: 4px;">{{ endpoint_url }}</code>
+      </p>
+    </div>
+
+    <!-- Performance Chart Section -->
+    <div class="section-card">
+      <h2 class="section-title">⚡ Performance History</h2>
+      
+      {% if metric_data %}
+        <div class="chart-container">
+          <div class="chart-title">Latency & Request Count Over Time</div>
+          <canvas id="performanceChart"></canvas>
+        </div>
+      {% else %}
+        <div class="no-data-message">
+          <strong>No performance data found for this endpoint.</strong>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Recent Requests Table Section -->
+    <div class="section-card">
+      <h2 class="section-title">📋 Recent Requests (Last 100)</h2>
+      
+      {% if log_data %}
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Duration (ms)</th>
+              <th>Status Code</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for log in log_data %}
+            <tr>
+              <td>{{ log.timestamp }}</td>
+              <td>{{ log.duration_ms }}</td>
+              <td>{{ log.status_code }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state">
+          <p>No raw request logs found for this endpoint.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <a href="{% url 'admin:pensieve_client_monitoredproject_changelist' %}" class="back-button">
+      ← Back to Dashboard
+    </a>
+  </div>
+
+  {{ metric_data|json_script:"metric-data" }}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      
+      // Function to format date
+      function formatDateTime(dateString) {
+        const date = new Date(dateString);
+        const options = {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        };
+        return date.toLocaleString('en-US', options);
+      }
+      
+      // --- Combined Performance Chart (Same as Dashboard) ---
+      const chartCanvas = document.getElementById('performanceChart');
+      if (chartCanvas) {
+        const data = JSON.parse(document.getElementById('metric-data').textContent);
+        
+        if (data && data.length > 0) {
+          data.reverse(); 
+
+          const labels = data.map(d => formatDateTime(d.timestamp));
+          const p95Data = data.map(d => d.p95_duration_ms);
+          const avgData = data.map(d => d.avg_duration_ms);
+          const requestCountData = data.map(d => d.request_count || 0);
+
+          new Chart(chartCanvas, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: 'Request Count',
+                  data: requestCountData,
+                  type: 'bar',
+                  backgroundColor: 'rgba(40, 167, 69, 0.3)',
+                  borderColor: '#28a745',
+                  borderWidth: 1,
+                  borderRadius: 4,
+                  yAxisID: 'y-requests',
+                  order: 3
+                },
+                {
+                  label: 'p95 Latency (ms)',
+                  data: p95Data,
+                  type: 'line',
+                  borderColor: '#dc3545',
+                  backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                  borderWidth: 3,
+                  tension: 0.4,
+                  fill: false,
+                  pointRadius: 5,
+                  pointHoverRadius: 7,
+                  pointBackgroundColor: '#dc3545',
+                  yAxisID: 'y-latency',
+                  order: 1
+                },
+                {
+                  label: 'Average Latency (ms)',
+                  data: avgData,
+                  type: 'line',
+                  borderColor: '#667eea',
+                  backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                  borderWidth: 3,
+                  tension: 0.4,
+                  fill: false,
+                  pointRadius: 5,
+                  pointHoverRadius: 7,
+                  pointBackgroundColor: '#667eea',
+                  yAxisID: 'y-latency',
+                  order: 2
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              interaction: {
+                mode: 'index',
+                intersect: false
+              },
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'top',
+                  labels: {
+                    usePointStyle: true,
+                    padding: 15,
+                    font: {
+                      size: 13,
+                      weight: '500'
+                    }
+                  }
+                },
+                tooltip: {
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  padding: 12,
+                  titleFont: {
+                    size: 14,
+                    weight: '600'
+                  },
+                  bodyFont: {
+                    size: 13
+                  },
+                  displayColors: true,
+                  callbacks: {
+                    label: function(context) {
+                      const label = context.dataset.label;
+                      const value = context.parsed.y;
+                      if (label === 'Request Count') {
+                        return label + ': ' + value + ' requests';
+                      } else {
+                        return label + ': ' + value.toFixed(2) + ' ms';
+                      }
+                    }
+                  }
+                }
+              },
+              scales: {
+                'y-latency': { 
+                  type: 'linear',
+                  position: 'left',
+                  beginAtZero: true, 
+                  title: { 
+                    display: true, 
+                    text: 'Latency (ms)',
+                    font: {
+                      size: 14,
+                      weight: '600'
+                    },
+                    color: '#4a5fc1'
+                  },
+                  grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                  },
+                  ticks: {
+                    font: {
+                      size: 12
+                    },
+                    color: '#4a5fc1'
+                  }
+                },
+                'y-requests': { 
+                  type: 'linear',
+                  position: 'right',
+                  beginAtZero: true, 
+                  title: { 
+                    display: true, 
+                    text: 'Request Count',
+                    font: {
+                      size: 14,
+                      weight: '600'
+                    },
+                    color: '#1e7e34'
+                  },
+                  grid: {
+                    drawOnChartArea: false
+                  },
+                  ticks: {
+                    font: {
+                      size: 12
+                    },
+                    color: '#1e7e34',
+                    precision: 0
+                  }
+                },
+                x: { 
+                  title: { 
+                    display: true, 
+                    text: 'Time',
+                    font: {
+                      size: 14,
+                      weight: '600'
+                    }
+                  },
+                  grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                  },
+                  ticks: {
+                    font: {
+                      size: 11
+                    },
+                    maxRotation: 45,
+                    minRotation: 45
+                  }
+                }
+              }
+            }
+          });
+        } else {
+          chartCanvas.style.display = 'none';
+        }
+      }
+    });
+  </script>
+{% endblock %}

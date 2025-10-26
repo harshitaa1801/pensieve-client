@@ -1,4 +1,5 @@
 {% extends "admin/base_site.html" %}
+{% load pensieve_tags %}
 
 {% block extrahead %}
   {{ block.super }}
@@ -316,7 +317,7 @@
             {% for endpoint in top_slow_endpoints %}
               <tr>
                 <td>
-                  <a href="?url_filter={{ endpoint.url|urlencode }}">{{ endpoint.url }}</a>
+                  <a href="{% url 'admin:pensieve-endpoint-detail' endpoint.url|b64encode %}">{{ endpoint.url }}</a>
                 </td>
                 <td><span class="latency-badge">{{ endpoint.max_p95 }} ms</span></td>
               </tr>
